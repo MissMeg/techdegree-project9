@@ -21,7 +21,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Api Keys
-config.js
+src/config.js
 
 # Git
 .git
