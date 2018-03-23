@@ -1,27 +1,74 @@
-import React from 'react';
+///////////////////IMPORTS///////////////
+//importing in the necessary items
+import React, { Component } from 'react';
+import Axios from 'axios';
+import api_key from '../config';
+import LinkList from './LinkList';
 
-const PhotoLayout = props => (
-  <div class="photo-container">
-        <h2>Results</h2>
-        <ul>
-            <li>
-                <img src="https://farm5.staticflickr.com/4334/37032996241_4c16a9b530.jpg" alt="" />
-            </li>
-            <li>
-                <img src="https://farm5.staticflickr.com/4342/36338751244_316b6ee54b.jpg" alt="" />
-            </li>
-            <li>
-                <img src="https://farm5.staticflickr.com/4343/37175099045_0d3a249629.jpg" alt="" />
-            </li>
-            <li>
-                <img src="https://farm5.staticflickr.com/4425/36337012384_ba3365621e.jpg" alt="" />
-            </li>
-            <li class="not-found">
-                <h3>No Results Found</h3>
-                <p>You search did not return any results. Please try again.</p>
-            </li>
-        </ul>
-     </div>  
-);
+class PhotoLayout extends Component {
+    
+    //hold returned photos, loading state, and photo links
+    constructor() {
+        super();
+        this.state = {
+          photos: [],
+          links: [],
+          loading: true,
+        }
+    }
+  
+  //perform the search when the component is on the page
+  componentDidMount() {
+    this.performSearch(this.props.query);
+  }
+  
+  //perform the search again when it receives a new query
+  componentWillReceiveProps(newProps) {
+      this.performSearch(newProps.query);
+  }
+  
+  //Create the links from the received info
+  createLinks = (args) => {
+    let photoLinks = args.map(photo => `https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}.jpg` );
+    this.setState({
+      links: photoLinks,
+      loading: false,
+    });
+  }
+    
+    //perform search by requesting from the api
+    performSearch = (query = 'cats') => {
+    Axios.get(`https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${api_key}&text=${query}&safe_search=1&content_type=1&per_page=12&page=1&format=json&nojsoncallback=1`)
+    .then(response => {
+      //set the state with the received data
+      this.setState({
+        photos: response.data.photos.photo,
+      });
+      //create the links
+      this.createLinks(this.state.photos);
+    })
+    //send error if there is one
+    .catch(error => {
+      console.log('Error fetching and parsing data', error);
+    });
+  }
+    
+    
+    //render photos if the loading state is false 
+    render() {
+        return (
+            <div className="photo-container">
+                <h2>Results</h2>
+                {
+                    this.state.loading 
+                    ?
+                    <p>Loading...</p>
+                    :
+                    <LinkList result={this.state.links} />
+                }
+            </div>   
+        );
+    }
+}
 
 export default PhotoLayout;
